@@ -1,0 +1,1158 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Cash Highway</title>
+    <!-- Подключаем разрешенный Tailwind CSS для красивого UI -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- ПОДКЛЮЧЕНИЕ РЕАЛЬНОГО РЕКЛАМНОГО SDK ADSGRAM ДЛЯ TELEGRAM MINI APPS -->
+    <script src="https://adsgram.org"></script>
+    <!-- Подключаем официальный скрипт Telegram WebApp API -->
+    <script src="https://telegram.org"></script>
+    <style>
+        body {
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+            background-color: #0f172a;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+
+        }
+        /* Фиксируем отображение игрового холста, предотвращая его схлопывание */
+        #gameCanvas {
+            display: block;
+            background: #111827;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 100%;
+            height: auto;
+            aspect-ratio: 3 / 4;
+            min-height: 360px;
+        }
+        /* Анимация мигания для рекламы */
+        @keyframes pulse-border {
+            0%, 100% { border-color: rgba(239, 68, 68, 0.7); }
+            50% { border-color: rgba(234, 179, 8, 1); }
+        }
+        .ad-glow {
+
+            border: 2px solid transparent;
+            animation: pulse-border 2s infinite;
+        }
+    </style>
+</head>
+<body class="text-white min-h-screen flex flex-col justify-between p-3 overflow-hidden select-none">
+
+    <!-- ЭКРАН ВЫБОРА ЯЗЫКА -->
+    <div id="screen-lang" class="w-full max-w-md mx-auto flex-1 flex flex-col justify-center items-center gap-6">
+        <div class="text-center">
+            <h1 class="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-yellow-400 via-amber-400 to-orange-500 bg-clip-text text-transparent">
+                CASH HIGHWAY
+            </h1>
+            <p class="text-sm text-slate-400 mt-2">Choose your language / Выберите язык</p>
+        </div>
+
+        <div class="w-full flex flex-col gap-3 px-4">
+            <button onclick="selectLanguage('en')" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-600 p-4 rounded-2xl flex items-center justify-center gap-3 text-lg font-bold transition-transform active:scale-95 shadow-lg">
+                <span class="text-2xl">🇬🇧</span>
+
+                <span>English</span>
+            </button>
+            <button onclick="selectLanguage('ru')" class="w-full bg-slate-800 hover:bg-slate-700 border border-slate-600 p-4 rounded-2xl flex items-center justify-center gap-3 text-lg font-bold transition-transform active:scale-95 shadow-lg">
+                <span class="text-2xl">🇷🇺</span>
+                <span>Русский</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- КОРНЕВОЙ КОНТЕЙНЕР ПРИЛОЖЕНИЯ -->
+    <div id="app-container" class="hidden w-full max-w-md mx-auto flex flex-col justify-between h-[96vh]">
+        
+        <!-- ВЕРХНЯЯ ПАНЕЛЬ -->
+        <header class="bg-slate-800/80 backdrop-blur border border-slate-700 rounded-2xl p-3 flex justify-between items-center shadow-lg relative shrink-0">
+            <div>
+                <p id="lbl-balance-title" class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Выводимый Баланс (TON Network)</p>
+                <div class="flex items-center gap-1.5">
+                    <span class="text-2xl font-black text-green-400" id="global-balance">0.0200</span>
+                    <span class="text-sm font-bold text-green-500">USDT</span>
+
+                </div>
+            </div>
+            
+            <div onclick="triggerRealAd('banner_top')" class="ad-glow bg-slate-900/90 text-[10px] text-yellow-400 px-3 py-1.5 rounded-xl text-center cursor-pointer flex flex-col items-center justify-center max-w-[150px]">
+                <span id="lbl-top-ad-title" class="font-bold text-red-400">⚡️ БОНУС +0.001$</span>
+                <span id="lbl-top-ad-sub" class="text-slate-400 text-[8px]">Кликни для просмотра</span>
+            </div>
+        </header>
+
+        <!-- ГЛАВНОЕ МЕНЮ -->
+        <div id="screen-menu" class="flex-1 flex flex-col justify-center items-center gap-4 my-2 overflow-y-auto">
+            <div class="text-center">
+                <h1 class="text-4xl font-extrabold tracking-tight bg-gradient-to-r from-yellow-400 via-amber-400 to-orange-500 bg-clip-text text-transparent">
+                    CASH HIGHWAY
+                </h1>
+                <p id="lbl-subtitle" class="text-sm text-slate-400 mt-1">Уворачивайся от машин, смотри рекламу, забирай USDT!</p>
+            </div>
+
+            <div class="bg-slate-800/50 border border-slate-700 rounded-xl p-3 w-full text-center">
+
+                <div class="flex justify-between text-xs mb-1">
+                    <span id="lbl-fuel-tank">Бензин в баке:</span>
+                    <span id="menu-fuel-text" class="text-amber-400 font-bold">100%</span>
+                </div>
+                <div class="w-full bg-slate-700 h-2 rounded-full overflow-hidden">
+                    <div id="menu-fuel-bar" class="bg-gradient-to-r from-amber-500 to-yellow-400 h-full transition-all duration-300" style="width: 100%"></div>
+                </div>
+                <button id="btn-refill-ad" onclick="triggerRealAd('refill')" class="mt-3 w-full bg-gradient-to-r from-red-600 to-orange-500 hover:from-red-500 hover:to-orange-400 text-white font-bold py-2 px-4 rounded-xl text-xs flex items-center justify-center gap-2 shadow-md">
+                    🎬 Заправить бак бесплатно (Смотреть Рекламу)
+                </button>
+            </div>
+
+            <div class="w-full flex flex-col gap-3">
+                <button id="btn-start-game" onclick="startGame()" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-400 hover:to-emerald-500 text-white text-xl font-black py-4 px-6 rounded-2xl shadow-lg transition-transform active:scale-[0.98] flex flex-col items-center">
+                    <span id="lbl-play">ПОГНАЛИ! 🏎️</span>
+                    <span id="lbl-play-sub" class="text-[10px] font-normal text-green-100 opacity-80">(Тратит бензин за заезд)</span>
+                </button>
+                
+                <div class="grid grid-cols-2 gap-3">
+
+                    <button onclick="switchTab('garage')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 p-3.5 rounded-xl font-bold flex flex-col items-center gap-1">
+                        <span id="lbl-garage-btn">Гараж / Тюнинг 🛠️</span>
+                        <span id="lbl-garage-sub" class="text-[9px] text-slate-400 font-normal">Улучшить авто</span>
+                    </button>
+                    <button onclick="switchTab('withdraw')" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 p-3.5 rounded-xl font-bold flex flex-col items-center gap-1">
+                        <span id="lbl-withdraw-btn">Вывод USDT 💸</span>
+                        <span id="lbl-withdraw-sub" class="text-[9px] text-slate-400 font-normal">Заявка на TON Wallet</span>
+                    </button>
+                </div>
+            </div>
+
+            <div onclick="triggerRealAd('interstitial')" class="w-full bg-gradient-to-r from-purple-900/60 to-slate-800/80 border border-purple-500/40 rounded-xl p-2.5 flex items-center justify-between cursor-pointer text-xs">
+                <div class="flex items-center gap-2">
+                    <span class="text-xl">🎁</span>
+                    <div>
+                        <p id="lbl-drop-title" class="font-bold text-purple-300">Секретный дроп (+0.0010 USDT)</p>
+                        <p id="lbl-drop-sub" class="text-[10px] text-slate-400">Открой за 1 рекламный ролик</p>
+                    </div>
+                </div>
+
+                <span id="lbl-drop-btn" class="bg-purple-600 text-[9px] px-2 py-1 rounded font-bold uppercase">Смотреть</span>
+            </div>
+        </div>
+
+        <!-- ИГРОВОЙ ЭКРАН -->
+        <div id="screen-game" class="hidden flex-1 flex flex-col justify-between my-2">
+            <div class="w-full flex justify-between items-center bg-slate-900/90 border border-slate-700 px-3 py-2 rounded-xl text-xs mb-2 shrink-0">
+                <div class="flex items-center gap-1">
+                    <span id="lbl-game-fuel">⛽ Бензин:</span>
+                    <span id="game-fuel" class="font-bold text-orange-400">100%</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <span id="lbl-game-speed">Трафик:</span>
+                    <span id="game-speed" class="font-bold text-cyan-400">0 км/ч</span>
+                </div>
+                <div class="flex items-center gap-1">
+                    <span id="lbl-game-run">Заезд:</span>
+                    <span id="game-score" class="font-bold text-yellow-400">0.0000 USDT</span>
+                </div>
+
+            </div>
+
+            <div class="w-full flex-1 flex items-center justify-center min-h-[360px] overflow-hidden">
+                <canvas id="gameCanvas"></canvas>
+            </div>
+
+            <div id="lbl-controls-hint" class="text-[11px] text-slate-400 text-center py-2 bg-slate-800/40 border border-slate-700/60 rounded-xl mt-2 shrink-0">
+                Тапай в <span class="text-cyan-400 font-bold">ЛЕВУЮ</span> половину экрана — влево, в <span class="text-cyan-400 font-bold">ПРАВУЮ</span> — вправо
+            </div>
+        </div>
+
+        <!-- ОКНО ГАРАЖА -->
+        <div id="screen-garage" class="hidden flex-1 flex flex-col justify-start gap-4 my-3 overflow-y-auto pr-1">
+            <div class="flex justify-between items-center">
+                <h2 id="lbl-garage-title" class="text-xl font-bold">Гараж и Тюнинг 🛠️</h2>
+                <button id="btn-back-garage" onclick="switchTab('menu')" class="bg-slate-700 text-xs px-3 py-1 rounded-lg">Назад</button>
+            </div>
+            
+            <p id="lbl-garage-desc" class="text-xs text-slate-400">Прокачивай характеристики машины за собранную валюту USDT, чтобы маневрировать быстрее и тратить меньше бензина.</p>
+
+            
+            <div class="flex flex-col gap-3">
+                <div class="bg-slate-800 border border-slate-700 p-3 rounded-xl flex justify-between items-center">
+                    <div>
+                        <h4 id="lbl-up1-name" class="font-bold text-sm">Экономичный инжектор</h4>
+                        <p id="lbl-up1-desc" class="text-[10px] text-slate-400">Уменьшает расход бензина в заезде</p>
+                        <p class="text-xs text-amber-400 mt-1"><span class="lbl-lvl-prefix">Текущий уровень:</span> <span id="lvl-engine">1</span>/5</p>
+                    </div>
+                    <button onclick="buyUpgrade('engine')" id="btn-up-engine" class="bg-green-600 hover:bg-green-500 text-xs font-bold py-2 px-3 rounded-lg flex flex-col items-center min-w-[85px]">
+                        <span class="lbl-upgrade-btn">Улучшить</span>
+                        <span class="text-[9px] text-green-200" id="cost-engine">0.05 USDT</span>
+                    </button>
+                </div>
+                
+                <div class="bg-slate-800 border border-slate-700 p-3 rounded-xl flex justify-between items-center">
+                    <div>
+                        <h4 id="lbl-up2-name" class="font-bold text-sm">Умный Сборщик</h4>
+                        <p id="lbl-up2-desc" class="text-[10px] text-slate-400">Увеличивает радиус притяжения крипто-монет</p>
+                        <p class="text-xs text-amber-400 mt-1"><span class="lbl-lvl-prefix">Текущий уровень:</span> <span id="lvl-magnet">1</span>/5</p>
+
+                    </div>
+                    <button onclick="buyUpgrade('magnet')" id="btn-up-magnet" class="bg-green-600 hover:bg-green-500 text-xs font-bold py-2 px-3 rounded-lg flex flex-col items-center min-w-[85px]">
+                        <span class="lbl-upgrade-btn">Улучшить</span>
+                        <span class="text-[9px] text-green-200" id="cost-magnet">0.10 USDT</span>
+                    </button>
+                </div>
+
+                <div class="bg-slate-800 border border-slate-700 p-3 rounded-xl flex justify-between items-center">
+                    <div>
+                        <h4 id="lbl-up3-name" class="font-bold text-sm">Спонсорский Смарт-контракт</h4>
+                        <p id="lbl-up3-desc" class="text-[10px] text-slate-400">Добавляет +25% к ценности стейблкоинов на дороге</p>
+                        <p class="text-xs text-amber-400 mt-1"><span class="lbl-lvl-prefix">Текущий уровень:</span> <span id="lvl-sponsor">1</span>/3</p>
+                    </div>
+                    <button onclick="buyUpgrade('sponsor')" id="btn-up-sponsor" class="bg-green-600 hover:bg-green-500 text-xs font-bold py-2 px-3 rounded-lg flex flex-col items-center min-w-[85px]">
+                        <span class="lbl-upgrade-btn">Улучшить</span>
+                        <span class="text-[9px] text-green-200" id="cost-sponsor">0.25 USDT</span>
+                    </button>
+                </div>
+            </div>
+
+
+            <div onclick="triggerRealAd('garage_bonus')" class="ad-glow bg-slate-900 rounded-xl p-3 text-center cursor-pointer mt-auto">
+                <p id="lbl-garage-ad-title" class="text-xs font-bold text-yellow-400">🔧 Бонус от спонсора (+0.0010 USDT)</p>
+                <p id="lbl-garage-ad-sub" class="text-[10px] text-slate-400 mt-0.5">Посмотри ролик и получи выплату на баланс</p>
+            </div>
+        </div>
+
+        <!-- ОКНО ВЫВОДА СРЕДСТВ -->
+        <div id="screen-withdraw" class="hidden flex-1 flex flex-col justify-start gap-4 my-3 overflow-y-auto">
+            <div class="flex justify-between items-center">
+                <h2 id="lbl-wd-title" class="text-xl font-bold">Вывод USDT (TON) 💸</h2>
+                <button id="btn-back-wd" onclick="switchTab('menu')" class="bg-slate-700 text-xs px-3 py-1 rounded-lg">Назад</button>
+            </div>
+
+            <p id="lbl-wd-desc" class="text-xs text-slate-400">Минимальная сумма для вывода: <span class="font-bold text-white">5.00 USDT</span>. Выплаты осуществляются напрямую смарт-контрактом на ваш кошелек в блокчейне TON.</p>
+
+                <label class="block">
+                    <span id="lbl-wd-net" class="text-xs text-slate-400 block mb-1">Сеть перевода:</span>
+                    <select id="withdraw-method" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-green-500">
+                        <option value="ton_usdt">The Open Network (TON) - USDT</option>
+
+                    </select>
+                </label>
+
+                <label class="block">
+                    <span id="lbl-wd-addr" class="text-xs text-slate-400 block mb-1">Адрес вашего TON-кошелька:</span>
+                    <input id="withdraw-wallet" type="text" placeholder="UQBl3... / Telegram Wallet" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-green-500">
+                </label>
+
+                <label class="block">
+                    <span id="lbl-wd-amt" class="text-xs text-slate-400 block mb-1">Сумма вывода (USDT):</span>
+                    <input id="withdraw-amount" type="number" step="0.01" placeholder="5.00" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-green-500">
+                </label>
+
+                <button id="btn-wd-submit" onclick="processWithdraw()" class="w-full bg-gradient-to-r from-green-500 to-emerald-600 font-bold py-3 rounded-xl mt-2 transition-transform active:scale-95 shadow-md">
+                    Вывести токены на кошелек
+                </button>
+            </div>
+
+            <div class="bg-slate-900 border border-slate-800 rounded-xl p-3 text-[11px] text-slate-400 flex flex-col gap-1">
+
+                <span id="lbl-wd-info-title" class="font-bold text-slate-300">⚠️ Важная информация:</span>
+                <span id="lbl-wd-info-1">1. Убедитесь, что ваш кошелек поддерживает стандарт Jetton USDT.</span>
+                <span id="lbl-wd-info-2">2. Обработка транзакции занимает до 2 суток.</span>
+                <span id="lbl-wd-info-3">3. Просмотр рекламы в приложении полностью покрывает сетеческую комиссию (Gas)!</span>
+            </div>
+        </div>
+
+        <!-- ЭКРАН КОНЦА ИГРЫ -->
+        <div id="screen-gameover" class="hidden flex-1 flex flex-col justify-center items-center gap-4 my-2 overflow-y-auto z-20">
+            <div class="text-center">
+                <h2 id="lbl-go-title" class="text-3xl font-black text-red-500 tracking-tight">СТОЛКНОВЕНИЕ! 💥</h2>
+                <p class="text-xs text-slate-400 mt-1" id="gameover-reason">Вы врезались во встречный автомобиль трафика</p>
+            </div>
+
+            <div class="bg-slate-800 border border-slate-700 rounded-2xl p-5 w-full max-w-sm text-center shadow-lg">
+                <p id="lbl-go-earned-title" class="text-xs text-slate-400 uppercase tracking-widest">Заработано токенов</p>
+                <p class="text-4xl font-black text-yellow-400 mt-1"><span id="gameover-earned">0.0000</span> <span class="text-xl">USDT</span></p>
+                
+                <div class="grid grid-cols-2 gap-2 mt-4 text-xs text-slate-300 border-t border-slate-700 pt-3">
+
+                    <div><span id="lbl-go-dist">Пройдено:</span> <span id="gameover-dist" class="font-bold text-white">0 м</span></div>
+                    <div><span id="lbl-go-speed">Пиковая скорость:</span> <span id="gameover-maxspeed" class="font-bold text-cyan-400">0 км/ч</span></div>
+                </div>
+            </div>
+
+            <div class="w-full flex flex-col gap-2.5">
+                <button id="btn-go-double" onclick="triggerRealAd('double')" class="ad-glow w-full bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 hover:from-amber-400 hover:to-orange-400 text-slate-950 font-black py-3 px-4 rounded-xl text-sm shadow-md flex items-center justify-center gap-2">
+                    🎬 СМОТРЕТЬ РЕКЛАМУ И Х2 УМНОЖИТЬ НАГРАДУ!
+                </button>
+                
+                <button onclick="triggerRealAd('revive')" id="btn-revive-ad" class="w-full bg-gradient-to-r from-purple-600 to-slate-800 text-purple-300 border border-purple-500/40 font-bold py-2.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2">
+                    ❤️ Починить машину на трассе (За 1 ролик)
+                </button>
+
+                <button id="btn-go-claim" onclick="claimRewardNormal()" class="w-full bg-slate-700 hover:bg-slate-600 font-bold py-3 px-4 rounded-xl text-xs text-white shadow">
+                    Забрать награду без бонусов
+                </button>
+            </div>
+        </div>
+
+
+        <div id="toast" class="hidden fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-slate-900 border border-slate-700 text-white px-4 py-3 rounded-xl shadow-2xl text-xs font-bold z-50 text-center min-w-[250px]">
+            Уведомление
+        </div>
+
+        <footer class="text-center text-[10px] text-slate-500 font-medium py-1 flex justify-between items-center px-2 shrink-0">
+            <span>Cash Highway v3.2 • Smooth 60 FPS</span>
+            <button onclick="switchLanguageScreen()" class="text-slate-400 underline hover:text-white">🇬🇧 / 🇷🇺 Language</button>
+        </footer>
+    </div>
+
+    <script>
+        const tg = window.Telegram?.WebApp;
+        if (tg) {
+            tg.ready();
+            tg.expand();
+        }
+
+        let savedBalance = localStorage.getItem('ch_user_balance');
+        let initialBalance = savedBalance ? parseFloat(savedBalance) : 0.0200;
+
+
+        let currentLang = 'ru';
+        const i18n = {
+            ru: {
+                balanceTitle: "Выводимый Баланс (TON Network)",
+                topAdTitle: "⚡️ БОНУС +0.001$",
+                topAdSub: "Кликни для просмотра",
+                subtitle: "Уворачивайся от машин, смотри рекламу, забирай USDT!",
+                fuelTank: "Бензин в баке:",
+                refillAd: "🎬 Заправить бак бесплатно (Смотреть Рекламу)",
+                play: "ПОГНАЛИ! 🏎️",
+                playSub: "(Тратит бензин за заезд)",
+                garageBtn: "Гараж / Тюнинг 🛠️",
+                garageSub: "Улучшить авто",
+                withdrawBtn: "Вывод USDT 💸",
+                withdrawSub: "Заявка на TON Wallet",
+                dropTitle: "Секретный дроп (+0.0010 USDT)",
+                dropSub: "Открой за 1 рекламный ролик",
+                dropBtn: "Смотреть",
+                gameFuel: "⛽ Бензин:",
+
+                gameSpeed: "Трафик:",
+                gameRun: "Заезд:",
+                controlsHint: 'Тапай в <span class="text-cyan-400 font-bold">ЛЕВУЮ</span> половину экрана — влево, в <span class="text-cyan-400 font-bold">ПРАВУЮ</span> — вправо',
+                garageTitle: "Гараж и Тюнинг 🛠️",
+                back: "Назад",
+                garageDesc: "Прокачивай характеристики машины за собранную валюту USDT, чтобы маневрировать быстрее и тратить меньше бензина.",
+                up1Name: "Экономичный инжектор",
+                up1Desc: "Уменьшает расход бензина в заезде",
+                up2Name: "Умный Сборщик",
+                up2Desc: "Увеличивает радиус притяжения крипто-монет",
+                up3Name: "Спонсорский Смарт-контракт",
+                up3Desc: "Добавляет +25% к ценности стейблкоинов на дороге",
+                lvlPrefix: "Текущий уровень:",
+                upgradeBtn: "Улучшить",
+                maxBtn: "МАКС",
+                garageAdTitle: "🔧 Бонус от спонсора (+0.0010 USDT)",
+                garageAdSub: "Посмотри ролик и получи выплату на баланс",
+                wdTitle: "Вывод USDT (TON) 💸",
+                wdDesc: 'Минимальная сумма для вывода: <span class="font-bold text-white">5.00 USDT</span>. Выплаты осуществляются напрямую смарт-контрактом на ваш кошелек в блокчейне TON.',
+
+                wdNet: "Сеть перевода:",
+                wdAddr: "Адрес вашего TON-кошелька:",
+                wdAmt: "Сумма вывода (USDT):",
+                wdSubmit: "Вывести токены на кошелек",
+                wdInfoTitle: "⚠️ Важная информация:",
+                wdInfo1: "1. Убедитесь, что ваш кошелек поддерживает стандарт Jetton USDT.",
+                wdInfo2: "2. Обработка транзакции занимает до 2 суток.",
+                wdInfo3: "3. Просмотр рекламы в приложении полностью покрывает сетевую комиссию (Gas)!",
+                goTitle: "СТОЛКНОВЕНИЕ! 💥",
+                goReasonCrash: "Вы врезались во встречный автомобиль трафика",
+                goEarnedTitle: "Заработано токенов",
+                goDist: "Пройдено:",
+                goSpeed: "Пиковая скорость:",
+                goDouble: "🎬 СМОТРЕТЬ РЕКЛАМУ И Х2 УМНОЖИТЬ НАГРАДУ!",
+                goRevive: "❤️ Починить машину на трассе (За 1 ролик)",
+                goClaim: "Забрать награду без бонусов",
+                speedUnit: "км/ч",
+                distUnit: "м",
+                toastAdSim: "ℹ️ Запуск симуляции рекламы Adsgram...",
+
+                toastAdSkip: "⚠️ Видео пропущено или нет доступной рекламы.",
+                toastRefill: "⛽ Бак полностью заправлен!",
+                toastDouble: "💰 Награда удвоена! Получено: +",
+                toastRevive: "❤️ Двигатель починен! Возвращаемся на трассу!",
+                toastBonus: "💸 Получен рекламный бонус: +",
+                toastUpgraded: "🚙 Элемент машины успешно прокачан!",
+                toastNoFunds: "❌ Недостаточно USDT на балансе!",
+                toastNoWallet: "❌ Укажите адрес кошелька TON!",
+                toastBadAmt: "❌ Укажите корректную сумму USDT.",
+                toastMinWd: "❌ Минимальная сумма вывода — 5.00 USDT",
+                toastWdSuccess: "✅ Заявка передана боту! Ожидайте перевод до 2 суток.",
+                toastNoFuel: "❌ Пополните бак за просмотр видео-ролика.",
+                toastClaimed: "💰 Награда зачислена на TON-баланс: +",
+                toastCheatDetected: "🚨 Обнаружена подозрительная активность! Награда за заезд аннулирована."
+            },
+            en: {
+                balanceTitle: "Withdrawable Balance (TON Network)",
+                topAdTitle: "⚡️ BONUS +0.001$",
+                topAdSub: "Click to watch ad",
+
+                subtitle: "Dodge traffic, watch ads, earn real USDT!",
+                fuelTank: "Fuel in tank:",
+                refillAd: "🎬 Refill Tank for Free (Watch Ad)",
+                play: "DRIVE! 🏎️",
+                playSub: "(Uses fuel per race)",
+                garageBtn: "Garage / Tuning 🛠️",
+                garageSub: "Upgrade car",
+                withdrawBtn: "Withdraw USDT 💸",
+                withdrawSub: "Payout to TON Wallet",
+                dropTitle: "Secret Drop (+0.0010 USDT)",
+                dropSub: "Open by watching 1 video ad",
+                dropBtn: "Watch",
+                gameFuel: "⛽ Fuel:",
+                gameSpeed: "Traffic:",
+                gameRun: "Earned:",
+                controlsHint: 'Tap the <span class="text-cyan-400 font-bold">LEFT</span> side to steer left, <span class="text-cyan-400 font-bold">RIGHT</span> side to steer right',
+                garageTitle: "Garage & Tuning 🛠️",
+                back: "Back",
+                garageDesc: "Upgrade your car specs using earned USDT to save fuel and increase your income on the highway.",
+
+                up1Name: "Eco Fuel Injector",
+                up1Desc: "Reduces fuel consumption per race",
+                up2Name: "Smart Coin Magnet",
+                up2Desc: "Increases crypto coin pickup radius",
+                up3Name: "Sponsor Smart-Contract",
+                up3Desc: "Adds +25% value to USDT bills on the road",
+                lvlPrefix: "Current level:",
+                upgradeBtn: "Upgrade",
+                maxBtn: "MAX",
+                garageAdTitle: "🔧 Sponsor Bonus (+0.0010 USDT)",
+                garageAdSub: "Watch a short video and get instant USDT payout",
+                wdTitle: "Withdraw USDT (TON) 💸",
+                wdDesc: 'Minimum withdrawal amount: <span class="font-bold text-white">5.00 USDT</span>. Payouts are sent directly via smart contract to your TON wallet.',
+                wdNet: "Transfer network:",
+                wdAddr: "Your TON Wallet address:",
+                wdAmt: "Withdrawal amount (USDT):",
+                wdSubmit: "Withdraw tokens to wallet",
+                wdInfoTitle: "⚠️ Important Information:",
+                wdInfo1: "1. Make sure your wallet supports Jetton USDT standard.",
+
+                wdInfo2: "2. Transaction processing takes up to 48 hours (2 days).",
+                wdInfo3: "3. Watching ads in the app completely covers network Gas fees!",
+                goTitle: "CRASHED! 💥",
+                goReasonCrash: "You crashed into oncoming highway traffic",
+                goEarnedTitle: "Tokens Earned",
+                goDist: "Distance:",
+                goSpeed: "Top speed:",
+                goDouble: "🎬 WATCH AD TO X2 MULTIPLY REWARD!",
+                goRevive: "❤️ Repair car on track (Watch 1 Ad)",
+                goClaim: "Claim normal reward without bonus",
+                speedUnit: "km/h",
+                distUnit: "m",
+                toastAdSim: "ℹ️ Starting Adsgram ad simulation...",
+                toastAdSkip: "⚠️ Video skipped or no ads available right now.",
+                toastRefill: "⛽ Fuel tank completely refilled!",
+                toastDouble: "💰 Reward doubled! Received: +",
+                toastRevive: "❤️ Engine repaired! Back on the highway!",
+                toastBonus: "💸 Ad bonus credited: +",
+                toastUpgraded: "🚙 Car part successfully upgraded!",
+
+                toastNoFunds: "❌ Insufficient USDT balance!",
+                toastNoWallet: "❌ Please enter your TON wallet address!",
+                toastBadAmt: "❌ Enter a valid USDT amount.",
+                toastMinWd: "❌ Minimum withdrawal amount is 5.00 USDT",
+                toastWdSuccess: "✅ Request sent to bot! Payout will arrive within 48h.",
+                toastNoFuel: "❌ Refill your tank by watching an ad first.",
+                toastClaimed: "💰 Reward credited to TON balance: +",
+                toastCheatDetected: "🚨 Suspicious activity detected! Run reward voided."
+            }
+        };
+
+        function t(key) {
+            return i18n[currentLang][key] || key;
+        }
+
+        function selectLanguage(lang) {
+            currentLang = lang;
+            applyTranslations();
+            document.getElementById('screen-lang').classList.add('hidden');
+
+            document.getElementById('app-container').classList.remove('hidden');
+            updateMenuUI();
+        }
+
+        function switchLanguageScreen() {
+            document.getElementById('app-container').classList.add('hidden');
+            document.getElementById('screen-lang').classList.remove('hidden');
+        }
+
+        function applyTranslations() {
+            document.getElementById('lbl-balance-title').innerText = t('balanceTitle');
+            document.getElementById('lbl-top-ad-title').innerText = t('topAdTitle');
+            document.getElementById('lbl-top-ad-sub').innerText = t('topAdSub');
+            document.getElementById('lbl-subtitle').innerText = t('subtitle');
+            document.getElementById('lbl-fuel-tank').innerText = t('fuelTank');
+            document.getElementById('btn-refill-ad').innerText = t('refillAd');
+            document.getElementById('lbl-play').innerText = t('play');
+            document.getElementById('lbl-play-sub').innerText = t('playSub');
+            document.getElementById('lbl-garage-btn').innerText = t('garageBtn');
+
+            document.getElementById('lbl-garage-sub').innerText = t('garageSub');
+            document.getElementById('lbl-withdraw-btn').innerText = t('withdrawBtn');
+            document.getElementById('lbl-withdraw-sub').innerText = t('withdrawSub');
+            document.getElementById('lbl-drop-title').innerText = t('dropTitle');
+            document.getElementById('lbl-drop-sub').innerText = t('dropSub');
+            document.getElementById('lbl-drop-btn').innerText = t('dropBtn');
+            document.getElementById('lbl-game-fuel').innerText = t('gameFuel');
+            document.getElementById('lbl-game-speed').innerText = t('gameSpeed');
+            document.getElementById('lbl-game-run').innerText = t('gameRun');
+            document.getElementById('lbl-controls-hint').innerHTML = t('controlsHint');
+            
+            document.getElementById('lbl-garage-title').innerText = t('garageTitle');
+            document.getElementById('btn-back-garage').innerText = t('back');
+            document.getElementById('lbl-garage-desc').innerText = t('garageDesc');
+            document.getElementById('lbl-up1-name').innerText = t('up1Name');
+            document.getElementById('lbl-up1-desc').innerText = t('up1Desc');
+            document.getElementById('lbl-up2-name').innerText = t('up2Name');
+            document.getElementById('lbl-up2-desc').innerText = t('up2Desc');
+            document.getElementById('lbl-up3-name').innerText = t('up3Name');
+
+            document.getElementById('lbl-up3-desc').innerText = t('up3Desc');
+            document.querySelectorAll('.lbl-lvl-prefix').forEach(el => el.innerText = t('lvlPrefix'));
+            document.querySelectorAll('.lbl-upgrade-btn').forEach(el => el.innerText = t('upgradeBtn'));
+            document.getElementById('lbl-garage-ad-title').innerText = t('garageAdTitle');
+            document.getElementById('lbl-garage-ad-sub').innerText = t('garageAdSub');
+
+            document.getElementById('lbl-wd-title').innerText = t('wdTitle');
+            document.getElementById('btn-back-wd').innerText = t('back');
+            document.getElementById('lbl-wd-desc').innerHTML = t('wdDesc');
+            document.getElementById('lbl-wd-net').innerText = t('wdNet');
+            document.getElementById('lbl-wd-addr').innerText = t('wdAddr');
+            document.getElementById('lbl-wd-amt').innerText = t('wdAmt');
+            document.getElementById('btn-wd-submit').innerText = t('wdSubmit');
+            document.getElementById('lbl-wd-info-title').innerText = t('wdInfoTitle');
+            document.getElementById('lbl-wd-info-1').innerText = t('wdInfo1');
+            document.getElementById('lbl-wd-info-2').innerText = t('wdInfo2');
+            document.getElementById('lbl-wd-info-3').innerText = t('wdInfo3');
+
+            document.getElementById('lbl-go-title').innerText = t('goTitle');
+
+            document.getElementById('lbl-go-earned-title').innerText = t('goEarnedTitle');
+            document.getElementById('lbl-go-dist').innerText = t('goDist');
+            document.getElementById('lbl-go-speed').innerText = t('goSpeed');
+            document.getElementById('btn-go-double').innerText = t('goDouble');
+            document.getElementById('btn-revive-ad').innerText = t('goRevive');
+            document.getElementById('btn-go-claim').innerText = t('goClaim');
+            updateGarageUI();
+        }
+
+        const GameSecurity = (() => {
+            let _balance = initialBalance;
+            let _fuel = 100;
+            let _runScore = 0.0000;
+            let _collectedItems = 0;
+            
+            const MAX_REWARD_PER_RUN = 0.2500; 
+            const BILL_BASE_VALUE = 0.0010;
+            const COIN_BASE_VALUE = 0.0002;
+
+
+            function sync() {
+                localStorage.setItem('ch_user_balance', _balance.toFixed(4));
+            }
+
+            return {
+                getBalance: () => _balance,
+                addBalance: (amt) => {
+                    if (typeof amt !== 'number' || isNaN(amt) || amt <= 0 || amt > 1.0) return false;
+                    _balance = Number((_balance + amt).toFixed(4));
+                    sync();
+                    return true;
+                },
+                deductBalance: (amt) => {
+                    if (amt > 0 && _balance >= amt) {
+                        _balance = Number((_balance - amt).toFixed(4));
+                        sync();
+                        return true;
+                    }
+                    return false;
+
+                },
+                getFuel: () => _fuel,
+                setFuel: (val) => { _fuel = Math.max(0, Math.min(100, val)); },
+                useFuel: (val) => { _fuel = Math.max(0, _fuel - val); },
+                
+                resetRun: () => {
+                    _runScore = 0.0000;
+                    _collectedItems = 0;
+                },
+                getRunScore: () => _runScore,
+                addRunItem: (type, sponsorLvl) => {
+                    _collectedItems++;
+                    let val = type === 'coin' 
+                        ? COIN_BASE_VALUE 
+                        : BILL_BASE_VALUE * (1 + (sponsorLvl - 1) * 0.25);
+                    
+                    if (_runScore + val <= MAX_REWARD_PER_RUN) {
+                        _runScore = Number((_runScore + val).toFixed(4));
+                    } else {
+
+                        _runScore = MAX_REWARD_PER_RUN;
+                    }
+                },
+                validateAndClaimRun: (multiplier = 1) => {
+                    const maxPossible = _collectedItems * (BILL_BASE_VALUE * 1.5) + 0.0001;
+                    if (_runScore > maxPossible || _runScore > MAX_REWARD_PER_RUN || _runScore < 0) {
+                        _runScore = 0;
+                        _collectedItems = 0;
+                        return { valid: false, amount: 0 };
+                    }
+                    const payout = Number((_runScore * multiplier).toFixed(4));
+                    _balance = Number((_balance + payout).toFixed(4));
+                    _runScore = 0;
+                    _collectedItems = 0;
+                    sync();
+                    return { valid: true, amount: payout };
+                }
+            };
+        })();
+
+
+        const BILL_BASE_VALUE = 0.0010;
+        let upgrades = { engine: 1, magnet: 1, sponsor: 1 };
+        const upgradeCosts = {
+            engine: [0.05, 0.15, 0.35, 0.75, 1.50],
+            magnet: [0.10, 0.25, 0.50, 1.00, 2.00],
+            sponsor: [0.25, 0.75, 2.00]
+        };
+
+        let currentRun = {
+            active: false, distance: 0, speed: 0, maxSpeed: 0,
+            lane: 1, targetX: 0, x: 0, y: 0
+        };
+
+        let currentAdRewardType = null; 
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d', { alpha: false }); 
+        
+        let gameObjects = [];
+        let animFrameId = null;
+
+        let lastTime = 0;
+        let spawnTimer = 0;
+        let difficultyTimer = 0;
+        let baseSpeed = 5;
+        let roadDashOffset = 0; 
+
+        const COLORS = {
+            bg: '#1f2937',
+            border: '#111827',
+            player: '#38bdf8',
+            playerGlow: '#0284c7',
+            obstacle: '#ef4444',
+            coin: '#fbbf24',
+            coinInner: '#d97706',
+            bill: '#34d399',
+            billText: '#065f46',
+            roadLines: 'rgba(255, 255, 255, 0.25)'
+        };
+
+
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const computedWidth = container.clientWidth || 320;
+            canvas.width = computedWidth;
+            canvas.height = computedWidth * (4 / 3);
+            if (currentRun.active) {
+                currentRun.y = canvas.height - 80;
+                currentRun.targetX = getLaneX(currentRun.lane);
+                currentRun.x = currentRun.targetX;
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+
+        function showToast(text, duration = 2500) {
+            const toast = document.getElementById('toast');
+            toast.innerText = text;
+            toast.classList.remove('hidden');
+            setTimeout(() => { toast.classList.add('hidden'); }, duration);
+        }
+
+
+        function triggerRealAd(rewardType) {
+            currentAdRewardType = rewardType;
+
+            if (!AdController) {
+                showToast(t('toastAdSim'));
+                setTimeout(() => { executeRewardLogic(); }, 1800);
+                return;
+            }
+
+            AdController.show().then(() => {
+                executeRewardLogic();
+            }).catch(() => {
+                showToast(t('toastAdSkip'));
+                currentAdRewardType = null;
+            });
+        }
+
+        function executeRewardLogic() {
+            if (currentAdRewardType === 'refill') {
+
+                GameSecurity.setFuel(100);
+                showToast(t('toastRefill'));
+                updateMenuUI();
+            } else if (currentAdRewardType === 'double') {
+                const res = GameSecurity.validateAndClaimRun(2);
+                if (!res.valid) {
+                    showToast(t('toastCheatDetected'));
+                } else {
+                    showToast(`${t('toastDouble')}${res.amount.toFixed(4)} USDT`);
+                }
+                switchTab('menu');
+            } else if (currentAdRewardType === 'revive') {
+                currentRun.active = true;
+                GameSecurity.setFuel(GameSecurity.getFuel() + 25); 
+                gameObjects = []; 
+                switchTab('game');
+                lastTime = performance.now();
+                animFrameId = requestAnimationFrame(gameLoop);
+                showToast(t('toastRevive'));
+
+            } else if (
+                currentAdRewardType === 'banner_top' || 
+                currentAdRewardType === 'interstitial' || 
+                currentAdRewardType === 'garage_bonus'
+            ) {
+                GameSecurity.addBalance(BILL_BASE_VALUE);
+                showToast(`${t('toastBonus')}${BILL_BASE_VALUE.toFixed(4)} USDT`);
+                document.getElementById('global-balance').innerText = GameSecurity.getBalance().toFixed(4);
+            }
+            currentAdRewardType = null;
+        }
+
+        function switchTab(tabName) {
+            const screens = ['screen-menu', 'screen-game', 'screen-garage', 'screen-withdraw', 'screen-gameover'];
+            screens.forEach(id => {
+                const el = document.getElementById(id);
+                if (el) el.classList.add('hidden');
+            });
+
+
+            if (tabName === 'menu') {
+                document.getElementById('screen-menu').classList.remove('hidden');
+                updateMenuUI();
+            } else if (tabName === 'game') {
+                document.getElementById('screen-game').classList.remove('hidden');
+                resizeCanvas();
+            } else if (tabName === 'garage') {
+                document.getElementById('screen-garage').classList.remove('hidden');
+                updateGarageUI();
+            } else if (tabName === 'withdraw') {
+                document.getElementById('screen-withdraw').classList.remove('hidden');
+            } else if (tabName === 'gameover') {
+                const goEl = document.getElementById('screen-gameover');
+                goEl.classList.remove('hidden');
+                goEl.style.display = 'flex';
+            }
+        }
+
+        function updateMenuUI() {
+
+            document.getElementById('global-balance').innerText = GameSecurity.getBalance().toFixed(4);
+            const f = Math.floor(GameSecurity.getFuel());
+            document.getElementById('menu-fuel-text').innerText = f + '%';
+            document.getElementById('menu-fuel-bar').style.width = f + '%';
+        }
+
+        function updateGarageUI() {
+            document.getElementById('lvl-engine').innerText = upgrades.engine;
+            if (upgrades.engine >= 5) {
+                document.getElementById('btn-up-engine').innerText = t('maxBtn');
+                document.getElementById('btn-up-engine').disabled = true;
+            } else {
+                document.getElementById('cost-engine').innerText = upgradeCosts.engine[upgrades.engine - 1].toFixed(2) + " USDT";
+            }
+            
+            document.getElementById('lvl-magnet').innerText = upgrades.magnet;
+            if (upgrades.magnet >= 5) {
+                document.getElementById('btn-up-magnet').innerText = t('maxBtn');
+                document.getElementById('btn-up-magnet').disabled = true;
+
+            } else {
+                document.getElementById('cost-magnet').innerText = upgradeCosts.magnet[upgrades.magnet - 1].toFixed(2) + " USDT";
+            }
+            
+            document.getElementById('lvl-sponsor').innerText = upgrades.sponsor;
+            if (upgrades.sponsor >= 3) {
+                document.getElementById('btn-up-sponsor').innerText = t('maxBtn');
+                document.getElementById('btn-up-sponsor').disabled = true;
+            } else {
+                document.getElementById('cost-sponsor').innerText = upgradeCosts.sponsor[upgrades.sponsor - 1].toFixed(2) + " USDT";
+            }
+        }
+
+        function buyUpgrade(type) {
+            let currentLvl = upgrades[type];
+            let maxLvl = type === 'sponsor' ? 3 : 5;
+            if (currentLvl >= maxLvl) return;
+            
+            let cost = upgradeCosts[type][currentLvl - 1];
+
+            if (GameSecurity.deductBalance(cost)) {
+                upgrades[type]++;
+                document.getElementById('global-balance').innerText = GameSecurity.getBalance().toFixed(4);
+                updateGarageUI();
+                showToast(t('toastUpgraded'));
+            } else {
+                showToast(t('toastNoFunds'));
+            }
+        }
+
+        function processWithdraw() {
+            const wallet = document.getElementById('withdraw-wallet').value.trim();
+            const amount = parseFloat(document.getElementById('withdraw-amount').value);
+
+            if (!wallet) return showToast(t('toastNoWallet'));
+            if (isNaN(amount) || amount <= 0) return showToast(t('toastBadAmt'));
+            if (amount < 5.00) return showToast(t('toastMinWd'));
+            
+            if (GameSecurity.getBalance() < amount) {
+
+                return showToast(t('toastNoFunds'));
+            }
+
+            const payloadString = `CASH_HIGHWAY_WITHDRAW:${wallet}:${amount.toFixed(2)}`;
+
+            fetch('/api/withdraw', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ wallet: wallet, amount: amount, initData: window.Telegram?.WebApp?.initData })
+            })
+            .then(res => {
+                if (res.ok) {
+                    executeFrontendWithdraw(amount);
+                } else {
+                    fallbackToTelegramSendData(amount, payloadString);
+                }
+            })
+            .catch(() => {
+                fallbackToTelegramSendData(amount, payloadString);
+
+            });
+        }
+
+        function executeFrontendWithdraw(amount) {
+            if (GameSecurity.deductBalance(amount)) {
+                document.getElementById('global-balance').innerText = GameSecurity.getBalance().toFixed(4);
+                document.getElementById('withdraw-amount').value = "";
+                showToast(t('toastWdSuccess'));
+            }
+        }
+
+        function fallbackToTelegramSendData(amount, payload) {
+            if (GameSecurity.deductBalance(amount)) {
+                document.getElementById('global-balance').innerText = GameSecurity.getBalance().toFixed(4);
+                document.getElementById('withdraw-amount').value = "";
+                showToast(t('toastWdSuccess'));
+
+                setTimeout(() => {
+                    if (window.Telegram?.WebApp?.sendData) {
+
+                        window.Telegram.WebApp.sendData(payload);
+                    } else {
+                        showToast(`⚡ Симуляция: Бот получил строку "${payload}"`);
+                    }
+                }, 1200);
+            }
+        }
+
+        function startGame() {
+            if (GameSecurity.getFuel() < 15) return showToast(t('toastNoFuel'));
+            
+            if (animFrameId) {
+                cancelAnimationFrame(animFrameId);
+                animFrameId = null;
+            }
+
+            let fuelConsumption = 15 * (1 - (upgrades.engine - 1) * 0.12);
+            GameSecurity.useFuel(fuelConsumption);
+            GameSecurity.resetRun();
+
+
+            currentRun.active = true;
+            currentRun.distance = 0;
+            currentRun.speed = 80;
+            currentRun.maxSpeed = 80;
+            currentRun.lane = 1; 
+            baseSpeed = 5 + (upgrades.engine * 0.4); 
+
+            gameObjects = [];
+            spawnTimer = 0;
+            difficultyTimer = 0;
+
+            switchTab('game');
+            resizeCanvas();
+            
+            currentRun.targetX = getLaneX(currentRun.lane);
+            currentRun.x = currentRun.targetX;
+            currentRun.y = canvas.height - 80;
+
+            lastTime = performance.now();
+
+            animFrameId = requestAnimationFrame(gameLoop);
+        }
+
+        function getLaneX(laneIndex) {
+            const laneWidth = canvas.width / 3;
+            return laneIndex * laneWidth + laneWidth / 2;
+        }
+
+        function processScreenTap(clickX) {
+            if (!currentRun.active) return;
+            const halfWidth = canvas.width / 2;
+            if (clickX < halfWidth) {
+                if (currentRun.lane > 0) currentRun.lane--;
+            } else {
+                if (currentRun.lane < 2) currentRun.lane++;
+            }
+            currentRun.targetX = getLaneX(currentRun.lane);
+        }
+
+
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            if (!e.touches || !e.touches[0]) return;
+            let rect = canvas.getBoundingClientRect();
+            let touchX = e.touches[0].clientX - rect.left;
+            processScreenTap(touchX);
+        }, { passive: false });
+
+        canvas.addEventListener('mousedown', (e) => {
+            let rect = canvas.getBoundingClientRect();
+            let clickX = e.clientX - rect.left;
+            processScreenTap(clickX);
+        }, false);
+
+        function gameLoop(time) {
+            if (!currentRun.active) return;
+
+            let deltaTime = (time - lastTime) / 1000;
+            lastTime = time;
+
+
+            if (isNaN(deltaTime) || deltaTime <= 0) deltaTime = 0.016;
+            if (deltaTime > 0.04) deltaTime = 0.04; 
+
+            updateGame(deltaTime);
+            
+            if (currentRun.active) {
+                drawGame();
+                animFrameId = requestAnimationFrame(gameLoop);
+            }
+        }
+
+        function updateGame(dt) {
+            const lerpFactor = 1 - Math.exp(-18 * dt);
+            currentRun.x += (currentRun.targetX - currentRun.x) * lerpFactor;
+
+            difficultyTimer += dt;
+            if (difficultyTimer >= 3.0) {
+                baseSpeed = Math.min(14, baseSpeed + 0.35); 
+                currentRun.speed = Math.floor(baseSpeed * 16);
+
+                if (currentRun.speed > currentRun.maxSpeed) currentRun.maxSpeed = currentRun.speed;
+                difficultyTimer = 0;
+            }
+
+            const pixelSpeed = baseSpeed * 65 * dt;
+            roadDashOffset = (roadDashOffset + pixelSpeed) % 40;
+            currentRun.distance += Math.floor(currentRun.speed * dt * 0.25);
+
+            spawnTimer += dt;
+            let spawnInterval = Math.max(0.48, 1.2 - (baseSpeed * 0.045)); 
+            if (spawnTimer >= spawnInterval) {
+                spawnTrafficPattern();
+                spawnTimer = 0;
+            }
+
+            const magRadius = 35 + (upgrades.magnet * 25);
+            const magRadiusSq = magRadius * magRadius; 
+            const hitRadiusSq = 30 * 30;
+            const canvasHeightLimit = canvas.height + 60;
+
+
+            for (let i = gameObjects.length - 1; i >= 0; i--) {
+                let obj = gameObjects[i];
+                obj.y += pixelSpeed;
+
+                let dx = currentRun.x - obj.x;
+                let dy = currentRun.y - obj.y;
+                let distSq = dx * dx + dy * dy;
+
+                if (obj.type === 'coin' || obj.type === 'bill') {
+                    if (distSq < magRadiusSq) {
+                        obj.x += dx * lerpFactor;
+                        obj.y += dy * lerpFactor;
+                        dx = currentRun.x - obj.x;
+                        dy = currentRun.y - obj.y;
+                        distSq = dx * dx + dy * dy;
+                    }
+                }
+
+                if (distSq < hitRadiusSq) {
+
+                    if (obj.type === 'coin' || obj.type === 'bill') {
+                        GameSecurity.addRunItem(obj.type, upgrades.sponsor);
+                        gameObjects.splice(i, 1);
+                        continue;
+                    } else if (obj.type === 'obstacle') {
+                        endGameRun(t('goReasonCrash'));
+                        return;
+                    }
+                }
+
+                if (obj.y > canvasHeightLimit) {
+                    gameObjects.splice(i, 1);
+                }
+            }
+
+            document.getElementById('game-fuel').innerText = Math.floor(GameSecurity.getFuel()) + '%';
+            document.getElementById('game-speed').innerText = `${currentRun.speed} ${t('speedUnit')}`;
+            document.getElementById('game-score').innerText = GameSecurity.getRunScore().toFixed(4) + ' USDT';
+        }
+
+
+        function spawnTrafficPattern() {
+            let patternType = Math.random();
+            if (patternType < 0.4) {
+                let carLane = Math.floor(Math.random() * 3);
+                let coinLane = (carLane + 1) % 3;
+                gameObjects.push({ x: getLaneX(carLane), y: -60, type: 'obstacle' });
+                gameObjects.push({ x: getLaneX(coinLane), y: -120, type: Math.random() > 0.3 ? 'coin' : 'bill' });
+            } 
+            else if (patternType < 0.8) {
+                let freeLane = Math.floor(Math.random() * 3); 
+                for (let lane = 0; lane < 3; lane++) {
+                    if (lane !== freeLane) {
+                        gameObjects.push({ x: getLaneX(lane), y: -60, type: 'obstacle' });
+                    } else {
+                        gameObjects.push({ x: getLaneX(lane), y: -60, type: 'coin' });
+                    }
+                }
+            } 
+            else {
+
+                let firstCarLane = Math.floor(Math.random() * 3);
+                let secondCarLane = (firstCarLane + 1) % 3;
+                gameObjects.push({ x: getLaneX(firstCarLane), y: -60, type: 'obstacle' });
+                gameObjects.push({ x: getLaneX(secondCarLane), y: -180, type: 'obstacle' });
+                gameObjects.push({ x: getLaneX(3 - firstCarLane - secondCarLane), y: -120, type: 'bill' });
+            }
+        }
+
+        function drawGame() {
+            const cw = canvas.width;
+            const ch = canvas.height;
+
+            ctx.fillStyle = COLORS.bg;
+            ctx.fillRect(0, 0, cw, ch);
+
+            ctx.strokeStyle = COLORS.roadLines;
+            ctx.lineWidth = 4;
+            let w = cw / 3;
+            
+
+            ctx.setLineDash([20, 20]);
+            ctx.lineDashOffset = -roadDashOffset;
+            ctx.beginPath();
+            ctx.moveTo(w, 0); ctx.lineTo(w, ch);
+            ctx.moveTo(w * 2, 0); ctx.lineTo(w * 2, ch);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            ctx.fillStyle = COLORS.border;
+            ctx.fillRect(0, 0, 10, ch);
+            ctx.fillRect(cw - 10, 0, 10, ch);
+            
+            ctx.font = 'bold 12px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+
+            for (let i = 0; i < gameObjects.length; i++) {
+                const obj = gameObjects[i];
+                if (obj.type === 'coin') {
+
+                    ctx.fillStyle = COLORS.coin;
+                    ctx.beginPath();
+                    ctx.arc(obj.x, obj.y, 11, 0, Math.PI * 2);
+                    ctx.fill();
+                    
+                    ctx.strokeStyle = COLORS.coinInner;
+                    ctx.lineWidth = 2;
+                    ctx.beginPath();
+                    ctx.arc(obj.x, obj.y, 7, 0, Math.PI * 2);
+                    ctx.stroke();
+                } else if (obj.type === 'bill') {
+                    ctx.fillStyle = COLORS.bill;
+                    ctx.fillRect(obj.x - 16, obj.y - 9, 32, 18);
+                    ctx.fillStyle = COLORS.billText;
+                    ctx.fillText('$', obj.x, obj.y);
+                } else if (obj.type === 'obstacle') {
+                    ctx.fillStyle = COLORS.obstacle;
+                    ctx.fillRect(obj.x - 18, obj.y - 30, 36, 60);
+                    ctx.fillStyle = '#000000';
+
+                    ctx.fillRect(obj.x - 14, obj.y - 10, 28, 12);
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.fillRect(obj.x - 14, obj.y + 24, 6, 4);
+                    ctx.fillRect(obj.x + 8, obj.y + 24, 6, 4);
+                }
+            }
+
+            ctx.fillStyle = COLORS.playerGlow;
+            ctx.fillRect(currentRun.x - 20, currentRun.y - 32, 40, 64);
+
+            ctx.fillStyle = COLORS.player;
+            ctx.fillRect(currentRun.x - 18, currentRun.y - 30, 36, 60);
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(currentRun.x - 13, currentRun.y - 8, 26, 14);
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(currentRun.x - 15, currentRun.y - 28, 6, 4);
+            ctx.fillRect(currentRun.x + 9, currentRun.y - 28, 6, 4);
+        }
+
+
+        function endGameRun(reason) {
+            currentRun.active = false;
+            if (animFrameId) {
+                cancelAnimationFrame(animFrameId);
+                animFrameId = null;
+            }
+            
+            document.getElementById('gameover-reason').innerText = reason;
+            document.getElementById('gameover-earned').innerText = GameSecurity.getRunScore().toFixed(4);
+            document.getElementById('gameover-dist').innerText = `${currentRun.distance} ${t('distUnit')}`;
+            document.getElementById('gameover-maxspeed').innerText = `${currentRun.maxSpeed} ${t('speedUnit')}`;
+            
+            document.getElementById('btn-revive-ad').disabled = false;
+            switchTab('gameover');
+        }
+
+        function claimRewardNormal() {
+            const res = GameSecurity.validateAndClaimRun(1);
+            if (!res.valid) {
+
+                showToast(t('toastCheatDetected'));
+            } else {
+                showToast(`${t('toastClaimed')}${res.amount.toFixed(4)} USDT`);
+            }
+            switchTab('menu');
+        }
+    </script>
+</body>
+</html>
